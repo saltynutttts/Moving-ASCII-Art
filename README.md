@@ -1,9 +1,18 @@
-This is a tool that converts images into ascii art and has the ability to warp them and make them "move" around.
+#ASCII Warp Tool
 
-# How to use
-to start, open a terminal and run "python -m http.server 8000".
-this will allow you to view the image with the html file.
-Next, run the main.rs script.
-Finally, open the html file and you will be able to view the ASCII art.
+A Rust-based tool that converts images into animated ASCII art. Supports warping and time-based distortion to create moving, fluid ASCII visuals rendered in the browser.
 
-To add custom images, just drop the image into the project folder, set the image name in the script, then run the script.
+#Usage
+
+Start a local server:
+
+python -m http.server 8000
+
+Run the Rust generator:
+
+cargo run
+
+Open index.html in your browser to view the animated ASCII output.
+
+#Custom Images
+Drop an image into the project folder, update the image filename in main.rs, then rerun the program.
