@@ -1,4 +1,4 @@
-#A SCII Warp Tool
+# ASCII Warp Tool
 
 A Rust-based tool that converts images into animated ASCII art. Supports warping and time-based distortion to create moving, fluid ASCII visuals rendered in the browser.
 
