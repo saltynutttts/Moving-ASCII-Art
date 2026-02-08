@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Live ASCII Viewer</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="c"></canvas>
+
+    <script>
+        const canvas = document.getElementById("c");
+        const ctx = canvas.getContext("2d", { alpha: false });
+
+        const FONT_PX = 8;
+        const LINE_H = 8;
+        const PAD = 12;
+        const BG = "#111";
+        const FG = "#949494ab";
+        const FRAME_MS = 33;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false;
+            ctx.font = `${FONT_PX}px Consolas, Menlo, Monaco, monospace`;
+            ctx.textBaseline = "top";
+        }
+        window.addEventListener("resize", resize);
+        resize();
+
+        let lastText = "";
+        let CHAR_W = 8;
+
+        async function fetchAscii() {
+            const res = await fetch("ascii.txt?ts=" + Date.now(), { cache: "no-store" });
+            if (!res.ok) return null;
+            return await res.text();
+        }
+
+        function draw(text) {
+            ctx.fillStyle = BG;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = FG;
+
+            CHAR_W = Math.max(1, Math.floor(ctx.measureText("M").width));
+            const maxCols = Math.max(1, Math.floor((canvas.width - PAD * 2) / CHAR_W));
+            const maxLines = Math.max(1, Math.floor((canvas.height - PAD * 2) / LINE_H));
+
+            let y = PAD;
+            let lineStart = 0;
+            let line = 0;
+
+            for (let i = 0; i <= text.length; i++) {
+                if (i === text.length || text.charCodeAt(i) === 10) {
+                    if (line >= maxLines) break;
+
+                    const slice = text.slice(lineStart, i);
+                    ctx.fillText(slice.length > maxCols ? slice.slice(0, maxCols) : slice, PAD, y);
+
+                    y += LINE_H;
+                    line++;
+                    lineStart = i + 1;
+                }
+            }
+        }
+
+        async function loop() {
+            const start = performance.now();
+
+            try {
+                const text = await fetchAscii();
+                if (text && text !== lastText) {
+                    lastText = text;
+                    requestAnimationFrame(() => draw(text));
+                }
+            } catch (_) { }
+
+            const elapsed = performance.now() - start;
+            setTimeout(loop, Math.max(0, FRAME_MS - elapsed));
+        }
+
+        loop();
+    </script>
+
+</body>
+
+</html>
