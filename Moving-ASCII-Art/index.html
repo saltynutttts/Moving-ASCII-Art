@@ -2,9 +2,8 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Live ASCII Viewer</title>
-
     <style>
         html,
         body {
@@ -16,37 +15,58 @@
 
         canvas {
             display: block;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 
 <body>
-
     <canvas id="c"></canvas>
 
     <script>
         const canvas = document.getElementById("c");
         const ctx = canvas.getContext("2d", { alpha: false });
 
-        const FONT_PX = 8;
-        const LINE_H = 8;
         const PAD = 12;
-        const BG = "#111";
-        const FG = "#949494ab";
+
+        const BG_COLOR = "#111111";
+        const TEXT_COLOR = "#666666";
+
+        const FONT_PX = 14;
+        const LINE_H = 16;
+
         const FRAME_MS = 33;
 
+        let dpr = 1;
+        let CHAR_W = 8;
+        let maxCols = 1;
+        let maxLines = 1;
+
         function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            ctx.imageSmoothingEnabled = false;
-            ctx.font = `${FONT_PX}px Consolas, Menlo, Monaco, monospace`;
+            const cssW = window.innerWidth;
+            const cssH = window.innerHeight;
+
+            dpr = window.devicePixelRatio || 1;
+
+            canvas.style.width = cssW + "px";
+            canvas.style.height = cssH + "px";
+            canvas.width = Math.round(cssW * dpr);
+            canvas.height = Math.round(cssH * dpr);
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.font = `${FONT_PX}px Consolas, "Cascadia Mono", Menlo, Monaco, monospace`;
             ctx.textBaseline = "top";
+
+            CHAR_W = Math.max(1, Math.ceil(ctx.measureText("M").width));
+            maxCols = Math.max(1, Math.floor((cssW - PAD * 2) / CHAR_W));
+            maxLines = Math.max(1, Math.floor((cssH - PAD * 2) / LINE_H));
         }
+
         window.addEventListener("resize", resize);
         resize();
 
         let lastText = "";
-        let CHAR_W = 8;
 
         async function fetchAscii() {
             const res = await fetch("ascii.txt?ts=" + Date.now(), { cache: "no-store" });
@@ -55,29 +75,26 @@
         }
 
         function draw(text) {
-            ctx.fillStyle = BG;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const w = canvas.width / dpr;
+            const h = canvas.height / dpr;
 
-            ctx.fillStyle = FG;
+            ctx.fillStyle = BG_COLOR;
+            ctx.fillRect(0, 0, w, h);
 
-            CHAR_W = Math.max(1, Math.floor(ctx.measureText("M").width));
-            const maxCols = Math.max(1, Math.floor((canvas.width - PAD * 2) / CHAR_W));
-            const maxLines = Math.max(1, Math.floor((canvas.height - PAD * 2) / LINE_H));
+            ctx.fillStyle = TEXT_COLOR;
 
             let y = PAD;
-            let lineStart = 0;
+            let start = 0;
             let line = 0;
 
-            for (let i = 0; i <= text.length; i++) {
+            for (let i = 0; i <= text.length && line < maxLines; i++) {
                 if (i === text.length || text.charCodeAt(i) === 10) {
-                    if (line >= maxLines) break;
-
-                    const slice = text.slice(lineStart, i);
-                    ctx.fillText(slice.length > maxCols ? slice.slice(0, maxCols) : slice, PAD, y);
-
+                    let s = text.slice(start, i);
+                    if (s.length > maxCols) s = s.slice(0, maxCols);
+                    ctx.fillText(s, PAD, y);
                     y += LINE_H;
                     line++;
-                    lineStart = i + 1;
+                    start = i + 1;
                 }
             }
         }
@@ -87,7 +104,7 @@
 
             try {
                 const text = await fetchAscii();
-                if (text && text !== lastText) {
+                if (text !== null && text !== lastText) {
                     lastText = text;
                     requestAnimationFrame(() => draw(text));
                 }
@@ -99,7 +116,6 @@
 
         loop();
     </script>
-
 </body>
 
 </html>
