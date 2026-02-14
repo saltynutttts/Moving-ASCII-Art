@@ -8,9 +8,13 @@ Start a local server in a new terminal:
 
 python -m http.server 8000
 
-Run the Rust generator:
+Run the Rust generator using an image:
 
-cargo run
+cargo run --bin main
+
+Run the Rust generator without an image and using perlin noise alone:
+
+cargo run --bin NoImage
 
 Open http://localhost:8000/ in your browser to view the animated ASCII output.
 
